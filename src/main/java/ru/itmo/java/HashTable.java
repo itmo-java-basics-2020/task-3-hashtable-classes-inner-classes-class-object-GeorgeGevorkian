@@ -1,67 +1,57 @@
 package ru.itmo.java;
 
-import java.util.Map;
-
 public class HashTable {
 
     private static final double LOAD_FACTOR = 0.5;
-    private static final double CAPACITY_MULTIPLIER = 2.0;
+    private static final int CAPACITY_MULTIPLIER = 2;
     private static final int NOT_FOUND = -1;
 
-    private Entry[] Pairs;
+    private Entry[] pairs;
     private int Capacity;
     private int Size;
-    private double LoadFactor;
-
-    HashTable(int initialCapacity, double loadFactor) {
+    private final double LoadFactor;
+    public HashTable(int initialCapacity, double loadFactor) {
         Capacity = initialCapacity;
-        Pairs = new Entry[Capacity];
+        pairs = new Entry[Capacity];
         LoadFactor = loadFactor;
     }
 
-    HashTable(int initialCapacity) {
-        Capacity = initialCapacity;
-        Pairs = new Entry[Capacity];
-        LoadFactor = LOAD_FACTOR;
+    public HashTable(int initialCapacity) {
+        this(initialCapacity, LOAD_FACTOR);
     }
 
     private int findNewPos(Object key) {
-        int hash = index(key, Pairs.length);
-
-        for (int i = hash; i < Pairs.length; i++) {
-            if (Pairs[i] == null || Pairs[i].isTombstone()) {
+        int hash = index(key, pairs.length);
+        for (int i = hash; i < pairs.length; i++) {
+            if (pairs[i] == null || pairs[i].isTombstone()) {
                 return i;
             }
         }
-
         for (int i = 0; i < hash; i++) {
-            if (Pairs[i] == null || Pairs[i].isTombstone()) {
+            if (pairs[i] == null || pairs[i].isTombstone()) {
                 return i;
             }
         }
-
         return NOT_FOUND;
     }
 
     private int findInd(Object key) {
-        int hash = index(key, Pairs.length);
-
-        for (int i = hash; i < Pairs.length; i++) {
-            if (Pairs[i] == null) {
+        int hash = index(key, pairs.length);
+        for (int i = hash; i < pairs.length; i++) {
+            if (pairs[i] == null) {
                 return NOT_FOUND;
             }
 
-            if (!Pairs[i].isTombstone() && Pairs[i].key.equals(key)) {
+            if (!pairs[i].isTombstone() && pairs[i].key.equals(key)) {
                 return i;
             }
         }
-
         for (int i = 0; i < hash; i++) {
-            if (Pairs[i] == null) {
+            if (pairs[i] == null) {
                 return NOT_FOUND;
             }
 
-            if (!Pairs[i].isTombstone() && Pairs[i].key.equals(key)) {
+            if (!pairs[i].isTombstone() && pairs[i].key.equals(key)) {
                 return i;
             }
         }
@@ -70,15 +60,16 @@ public class HashTable {
     }
 
     private void updateCapacity() {
-        if (Size >= threshold()) {
-            Capacity = (int) (Capacity * CAPACITY_MULTIPLIER);
-            Entry[] oldPairs = Pairs;
-            Pairs = new Entry[Capacity];
+        int threshold = (int) (Capacity * LoadFactor);
+        if (Size >= threshold) {
+            Capacity = Capacity * CAPACITY_MULTIPLIER;
+            Entry[] oldPairs = pairs;
+            pairs = new Entry[Capacity];
             int prevSize = Size;
 
             for (Entry oldPair : oldPairs) {
                 if (oldPair != null && !oldPair.isTombstone()) {
-                    Pairs[findNewPos(oldPair.getKey())] = new Entry(oldPair.getKey(), oldPair.getValue());
+                    pairs[findNewPos(oldPair.getKey())] = new Entry(oldPair.getKey(), oldPair.getValue());
                 }
             }
 
@@ -93,11 +84,11 @@ public class HashTable {
         }
 
         Object prevValue = null;
-        if (Pairs[pos] != null) {
-            prevValue = Pairs[pos].getValue();
+        if (pairs[pos] != null) {
+            prevValue = pairs[pos].getValue();
         }
 
-        Pairs[pos] = new Entry(key, value);
+        pairs[pos] = new Entry(key, value);
         if (prevValue == null) {
             Size++;
         }
@@ -112,7 +103,7 @@ public class HashTable {
             return null;
         }
 
-        Entry pair = Pairs[findInd(key)];
+        Entry pair = pairs[pos];
 
         return pair.getValue();
     }
@@ -123,8 +114,8 @@ public class HashTable {
             return null;
         }
 
-        Object result = Pairs[pos].getValue();
-        Pairs[pos] = Entry.createTombstone();
+        Object result = pairs[pos].getValue();
+        pairs[pos] = Entry.createTombstone();
         Size--;
         return result;
     }
@@ -133,19 +124,14 @@ public class HashTable {
         return Size;
     }
 
-    private int threshold() {
-        return (int) (Capacity * LoadFactor);
-    }
-
-
     private int index(Object object, int length) {
         return Math.abs(object.hashCode() % length);
     }
 
     private static class Entry {
 
-        private final Object key;
-        private final Object value;
+        private Object key;
+        private Object value;
         private boolean isTombstone;
 
         public static Entry createTombstone() {
