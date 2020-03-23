@@ -7,12 +7,12 @@ public class HashTable {
     private static final int NOT_FOUND = -1;
 
     private Entry[] pairs;
-    private int Capacity;
-    private int Size;
+    private int capacity;
+    private int size;
     private final double LoadFactor;
     public HashTable(int initialCapacity, double loadFactor) {
-        Capacity = initialCapacity;
-        pairs = new Entry[Capacity];
+        capacity = initialCapacity;
+        pairs = new Entry[capacity];
         LoadFactor = loadFactor;
     }
 
@@ -60,12 +60,12 @@ public class HashTable {
     }
 
     private void updateCapacity() {
-        int threshold = (int) (Capacity * LoadFactor);
-        if (Size >= threshold) {
-            Capacity = Capacity * CAPACITY_MULTIPLIER;
+        int threshold = (int) (capacity * LoadFactor);
+        if (size >= threshold) {
+            capacity = capacity * CAPACITY_MULTIPLIER;
             Entry[] oldPairs = pairs;
-            pairs = new Entry[Capacity];
-            int prevSize = Size;
+            pairs = new Entry[capacity];
+            int prevSize = size;
 
             for (Entry oldPair : oldPairs) {
                 if (oldPair != null && !oldPair.isTombstone()) {
@@ -73,11 +73,11 @@ public class HashTable {
                 }
             }
 
-            Size = prevSize;
+            size = prevSize;
         }
     }
 
-    Object put(Object key, Object value) {
+    public Object put(Object key, Object value) {
         int pos = findInd(key);
         if (pos == NOT_FOUND) {
             pos = findNewPos(key);
@@ -90,14 +90,14 @@ public class HashTable {
 
         pairs[pos] = new Entry(key, value);
         if (prevValue == null) {
-            Size++;
+            size++;
         }
         updateCapacity();
 
         return prevValue;
     }
 
-    Object get(Object key) {
+     public Object get(Object key) {
         int pos = findInd(key);
         if (pos == NOT_FOUND) {
             return null;
@@ -108,7 +108,7 @@ public class HashTable {
         return pair.getValue();
     }
 
-    Object remove(Object key) {
+    public Object remove(Object key) {
         int pos = findInd(key);
         if (pos == NOT_FOUND) {
             return null;
@@ -116,12 +116,12 @@ public class HashTable {
 
         Object result = pairs[pos].getValue();
         pairs[pos] = Entry.createTombstone();
-        Size--;
+        size--;
         return result;
     }
 
-    int size() {
-        return Size;
+    public int size() {
+        return size;
     }
 
     private int index(Object object, int length) {
@@ -130,9 +130,9 @@ public class HashTable {
 
     private static class Entry {
 
-        private Object key;
-        private Object value;
-        private boolean isTombstone;
+        private final Object key;
+        private final Object value;
+        private final boolean isTombstone;
 
         public static Entry createTombstone() {
             return new Entry();
@@ -147,6 +147,7 @@ public class HashTable {
         public Entry(Object key, Object value) {
             this.key = key;
             this.value = value;
+            this.isTombstone = false;
         }
 
         public Object getKey() {
